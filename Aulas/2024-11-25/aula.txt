@@ -1,0 +1,135 @@
+db.getCollection("megasena").find({})
+
+/*pesquisa campanhas que tiveram mais que 4 ganhadores*/
+db.megasena.find(
+{"Ganhadores 6 acertos": {$gt:4}}
+).count();
+
+
+/*pesquisa campanhas da mega que tiveram 5,6,7 ganhadores*/
+db.megasena.find(
+{"Ganhadores 6 acertos" : {$in:[5,6,7]}}
+).count();
+
+
+/*pesquisa campanhas da mega que onde a quantidade de vencedores não pode ser 7* (diferente)*/
+db.megasena.find(
+{"Ganhadores 6 acertos" : {$ne: 7}}
+).count();
+
+/*pesquisa campanhas da mega que onde a quantidade de vencedores é diferente de 5, 6 e 7 (diferente)*/
+db.megasena.find(
+{"Ganhadores 6 acertos" : {$nin: [5,6,7]}}
+).count();
+
+/*Um operador comum nos bancos relacionais é o DISTINCT, que elimina as repetições do resultado de uma consulta.*/
+db.megasena.distinct("Ganhadores 6 acertos");
+
+
+/*consulta de qual o sorteio que ganhou 52 pessoas.*/
+db.megasena.find(
+{"Ganhadores 6 acertos" : {$eq:52}}
+);
+
+/*insert de */
+db.megasena.insert({ "Acumulado 6 acertos": "123"})
+
+
+/*Em resumo, esse regex (/^\d.*$/) verifica se o campo "Acumulado 6 acertos" começa com um número e pode ter qualquer 
+sequência de caracteres depois disso, incluindo não ter mais nada após o dígito inicial.*/
+db.megasena.find({ "Acumulado 6 acertos": { $regex: /^\d.*$/ } })
+
+
+/*faz a consulta que busca sorteio com 5 ou 7 ganhadores*/
+db.megasena.find({ $or: [
+{ "Ganhadores 6 acertos": { $eq: 5 } },
+{ "Ganhadores 6 acertos": { $eq: 7 } }
+]}).count();
+
+
+/*faz a consulta que busca sorteio com 5 e 7 ganhadores*/
+db.megasena.find(
+{ "Ganhadores 6 acertos": { $in: [5, 7] } }
+).count();
+
+/*verificando a existencia de um campo, para isso farei um inset de um novo campo*/
+db.megasena.insert({"obs": "sem sorteio"});
+
+db.megasena.find().count();
+
+/* exists: verificando os registros que tem o campo obs*/
+db.megasena.find({"obs":{$exists:true}}).count();
+
+/* exists: verificando os registros que não o campo obs*/
+db.megasena.find({"obs":{$exists:false}}).count();
+
+/*O operador LIKE é muito comum nas bases relacionais e permite fazer
+buscas por trechos de texto nas tabelas.*/
+db.megasena.find({ "Observação": /MG/},{"Observação":1,"_id":0});
+
+
+/*Para busca sem considerar maiúsculas ou minúsculas, é preciso colocar i (de
+case Insensitive):*/
+db.megasena.find({ "Observação":
+/mg/},{"Observação":1,"_id":0}).count();
+
+
+/*Para buscar por palavras que terminam com um trecho de caracteres, é
+preciso colocar $:*/
+
+/*em qualquer parte do texto*/
+db.megasena.find({ "Observação": /MG./},{"Observação":1,"_id":0}).count();
+
+/*apenas no fim do texto*/
+db.megasena.find({ "Observação": /MG.$/},{"Observação":1,"_id":0}).count();
+
+
+/*Para buscar por palavras que se iniciam com um trecho de caracteres, é
+preciso colocar ^ :*/
+
+/*i = case sensitive*/
+db.megasena.find({ "Observação":
+/^Ganhador/i},{"Observação":1,"_id":0});
+
+/*Para ordenar o resultado da consulta, usamos o sufixo sort, especificando
+as colunas que desejamos ordenar em ordem crescente (com o valor 1):*/
+
+/* 1 = ordem crescente 
+  -1 = ordem decrescente*/
+db.megasena.find(
+{},
+{"Data do Sorteio":1,"_id":0}
+).sort({"Data do Sorteio":1});
+
+db.megasena.find(
+{},
+{"Data do Sorteio":1,"_id":0}
+).sort({"Data do Sorteio":-1});
+
+/*Para limitar os resultados, podemos usar limit informando a quantidade de
+documentos para exibir: está exibindo o primeiro*/
+db.megasena.find({},{"Data do Sorteio":1,"_id":0}).limit(1);
+
+/*exibindo o útimo*/
+db.megasena.find({},{"Data do Sorteio":1,"_id":0}).sort({"Data do Sorteio":-1}).limit(1);
+
+
+
+/*Além de limitar com limit, podemos informar a quantidade de documentos
+para pular antes de exibir com skip(faz uma páginação, a partir de uma quantidade e pega a partir de um novo valor):*/
+
+db.megasena.find({},{"Data do Sorteio":1,"_id":0}).limit(1).skip(100);
+
+
+/*O comando sort pode ser usado também para exibir o último registro
+cadastrado:*/
+db.megasena.find().sort({"_id":-1}).limit(1);
+
+
+/*comando para conhecer todos os campos de uma tabela*/
+
+db.megasena.aggregate([
+  { $project: { fields: { $objectToArray: "$$ROOT" } } },
+  { $unwind: "$fields" },
+  { $group: { _id: null, uniqueFields: { $addToSet: "$fields.k" } } }
+])
